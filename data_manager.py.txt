@@ -1,0 +1,39 @@
+import json
+import os
+
+DATA_DIR = 'data'
+COURSES_FILE = os.path.join(DATA_DIR, 'courses.json')
+USERS_FILE = os.path.join(DATA_DIR, 'users.json')
+SETTINGS_FILE = os.path.join(DATA_DIR, 'settings.json')
+
+def load_data(file_path):
+    if not os.path.exists(file_path):
+        return {} if 'users' in file_path else []
+    try:
+        with open(file_path, 'r') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        return {} if 'users' in file_path else [] # Return dict for users, list for courses
+
+def save_data(file_path, data):
+    with open(file_path, 'w') as f:
+        json.dump(data, f, indent=2)
+
+# --- Helper functions ---
+def get_courses():
+    return load_data(COURSES_FILE)
+
+def save_courses(courses):
+    save_data(COURSES_FILE, courses)
+    
+def get_users():
+    return load_data(USERS_FILE)
+
+def save_users(users):
+    save_data(USERS_FILE, users)
+
+def get_settings():
+    return load_data(SETTINGS_FILE)
+
+def save_settings(settings):
+    save_data(SETTINGS_FILE, settings)
