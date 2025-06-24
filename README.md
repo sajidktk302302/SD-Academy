@@ -1,1 +1,3 @@
-# SD-Academy
+__pycache__/
+*.pyc
+.env
