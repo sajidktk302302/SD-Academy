@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SD302 ANALYSER BOT</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 20px auto; padding: 15px; background-color: #f4f4f9; color: #333; }
+        h1, h2 { color: #1a1a1a; }
+        .section { background-color: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="file"], select, button { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; }
+        button { background-color: #007bff; color: white; font-weight: bold; cursor: pointer; border: none; transition: background-color 0.2s; }
+        button:hover:not(:disabled) { background-color: #0056b3; }
+        button:disabled { background-color: #a0cfff; cursor: not-allowed; }
+        #signalDisplay { font-size: 1.2em; font-weight: bold; padding: 15px; border-radius: 5px; text-align: center; margin-top: 10px; min-height: 25px; }
+        #timerDisplay { font-size: 1.1em; font-weight: bold; color: #d9534f; text-align: center; margin-top: 10px; min-height: 22px; }
+        .signal-up { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .signal-down { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .signal-wait { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .signal-sideways { background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
+    </style>
+</head>
+<body>
+
+    <h1>Upgraded Offline Signal Bot</h1>
+    <p>This version uses improved slope and zone analysis for more accurate signals.</p>
+
+    <div class="section">
+        <h2>1. Upload Chart Screenshot</h2>
+        <label for="screenshotUpload">Accepts .jpg or .png files</label>
+        <input type="file" id="screenshotUpload" accept="image/png, image/jpeg">
+    </div>
+
+    <div class="section">
+        <h2>2. Select Timeframe</h2>
+        <select id="timeframeSelect">
+            <option value="">-- Please select a timeframe --</option>
+            <option value="1">1 Minute</option>
+            <option value="5">5 Minutes</option>
+            <option value="15">15 Minutes</option>
+        </select>
+    </div>
+
+     
+<!-- Adds areia -->
+<script type="text/javascript">
+	atOptions = {
+		'key' : '62b08fac83a5b4df587512fd8be51680',
+		'format' : 'iframe',
+		'height' : 50,
+		'width' : 320,
+		'params' : {}
+	};
+</script>
+<script type="text/javascript" src="//www.highperformanceformat.com/62b08fac83a5b4df587512fd8be51680/invoke.js"></script>
+
+
+<!-- adds End aria -->
+
+    <div class="section">
+        <button id="getSignalBtn" disabled>Get Signal</button>
+        <div id="signalDisplay"></div>
+        <div id="timerDisplay"></div>
+    </div>
+    
+<!-- adds aria  -->
+<script type="text/javascript">
+	atOptions = {
+		'key' : '15a78d54e80bce9f918a76d9e0129798',
+		'format' : 'iframe',
+		'height' : 50,
+		'width' : 320,
+		'params' : {}
+	};
+</script>
+<script type="text/javascript" src="//www.highperformanceformat.com/15a78d54e80bce9f918a76d9e0129798/invoke.js"></script>
+<!-- adds end aria -->
+
+
+
+    <!-- Hidden canvas for image processing -->
+    <canvas id="imageCanvas" style="display:none;"></canvas>
+
+    <script>
+        const screenshotUpload = document.getElementById('screenshotUpload');
+        const timeframeSelect = document.getElementById('timeframeSelect');
+        const getSignalBtn = document.getElementById('getSignalBtn');
+        const signalDisplay = document.getElementById('signalDisplay');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const canvas = document.getElementById('imageCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        let countdownInterval;
+
+        function checkInputs() {
+            const isFileUploaded = screenshotUpload.files.length > 0;
+            const isTimeframeSelected = timeframeSelect.value !== "";
+            getSignalBtn.disabled = !(isFileUploaded && isTimeframeSelected);
+        }
+
+        screenshotUpload.addEventListener('change', checkInputs);
+        timeframeSelect.addEventListener('change', checkInputs);
+
+        getSignalBtn.addEventListener('click', () => {
+            // ✅ FIX 3: Clear old signal history and timer on each new request
+            clearInterval(countdownInterval);
+            signalDisplay.innerHTML = 'Analyzing...';
+            signalDisplay.className = '';
+            timerDisplay.innerHTML = '';
+            getSignalBtn.disabled = true;
+
+            const file = screenshotUpload.files[0];
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    setTimeout(() => {
+                        // ✅ FIX 1 & 2: Use the new, improved analysis logic
+                        const signal = analyzeImageWithSlope();
+                        displaySignal(signal);
+                    }, 500); // Simulate processing time for better UX
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        /**
+         * Calculates the slope of a set of 2D points using linear regression.
+         * A negative slope means the trend is going UP (Y coordinate decreases).
+         * A positive slope means the trend is going DOWN (Y coordinate increases).
+         * @param {Array<Object>} points - Array of {x, y} points.
+         * @returns {number} The calculated slope.
+         */
+        function calculateSlope(points) {
+            if (points.length < 2) return 0;
+            
+            let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+            const n = points.length;
+
+            points.forEach(p => {
+                sumX += p.x;
+                sumY += p.y;
+                sumXY += p.x * p.y;
+                sumX2 += p.x * p.x;
+            });
+
+            const numerator = (n * sumXY) - (sumX * sumY);
+            const denominator = (n * sumX2) - (sumX * sumX);
+            
+            return denominator === 0 ? 0 : numerator / denominator;
+        }
+
+        /**
+         * ✅ NEW ANALYSIS LOGIC (V2)
+         * Analyzes the image by detecting price zones and the slope of recent price action.
+         */
+        function analyzeImageWithSlope() {
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // --- Configuration ---
+            const roiXStart = Math.floor(width * 0.65); // Analyze rightmost 35%
+            const roiYStart = Math.floor(height * 0.1);  // Ignore top/bottom bezels
+            const roiYEnd = Math.floor(height * 0.9);
+            const numSlices = 15; // Divide ROI into 15 vertical slices for slope analysis
+            const sliceWidth = (width - roiXStart) / numSlices;
+
+            let recentHighY = roiYEnd;
+            let recentLowY = roiYStart;
+            let lastPriceY = -1;
+            const points = [];
+
+            // --- Pass 1: Find price points for slope and detect overall High/Low ---
+            for (let i = 0; i < numSlices; i++) {
+                const sliceXStart = roiXStart + Math.floor(i * sliceWidth);
+                const sliceXEnd = sliceXStart + Math.floor(sliceWidth);
+                
+                let ySum = 0;
+                let yCount = 0;
+
+                for (let x = sliceXStart; x < sliceXEnd; x++) {
+                    for (let y = roiYStart; y < roiYEnd; y++) {
+                        const pixel = ctx.getImageData(x, y, 1, 1).data;
+                        const r = pixel[0], g = pixel[1], b = pixel[2];
+                        const isColor = (r > 50 || g > 50 || b > 50) && Math.abs(r-g) > 20 || Math.abs(g-b) > 20;
+
+                        if (isColor) {
+                            ySum += y;
+                            yCount++;
+                            if (y < recentHighY) recentHighY = y; // Update overall high
+                            if (y > recentLowY) recentLowY = y;  // Update overall low
+                        }
+                    }
+                }
+
+                if (yCount > 0) {
+                    const avgY = ySum / yCount;
+                    points.push({ x: i, y: avgY });
+                    if (i === numSlices - 1) {
+                        lastPriceY = avgY; // Most recent price is the average of the last slice
+                    }
+                }
+            }
+            
+            if (points.length < 5) { // Not enough data points found
+                return { type: 'SIDEWAYS', reason: 'Not enough price data detected.' };
+            }
+
+            // --- Logic 1: Zone Detection (Highest Priority) ---
+            const priceRange = recentLowY - recentHighY;
+            if (priceRange > 50) { // Only check zones if there's a meaningful range
+                const zoneThreshold = 0.15; // 15% from top or bottom is a zone
+                if ((lastPriceY - recentHighY) / priceRange < zoneThreshold) {
+                    return { type: 'WAIT_ZONE', reason: 'Market Near Supply Zone' };
+                }
+                if ((recentLowY - lastPriceY) / priceRange < zoneThreshold) {
+                    return { type: 'WAIT_ZONE', reason: 'Market Near Demand Zone' };
+                }
+            }
+
+            // --- Logic 2: Slope Analysis for Trend ---
+            const slope = calculateSlope(points);
+            
+            // Remember: Y=0 is TOP of screen. Negative slope means Y is decreasing -> UP trend.
+            const slopeThreshold = 0.4; // How steep the trend line must be
+            if (slope < -slopeThreshold) {
+                return { type: 'UP' };
+            } else if (slope > slopeThreshold) {
+                return { type: 'DOWN' };
+            } else {
+                return { type: 'SIDEWAYS', reason: 'Market direction is not clear.' };
+            }
+        }
+
+        function displaySignal(signal) {
+            const timeframe = timeframeSelect.options[timeframeSelect.selectedIndex].text;
+            let message = '';
+            let cssClass = '';
+
+            switch (signal.type) {
+                case 'UP':
+                    message = `✅ Signal: UP for ${timeframe}`;
+                    cssClass = 'signal-up';
+                    startCountdown();
+                    break;
+                case 'DOWN':
+                    message = `✅ Signal: DOWN for ${timeframe}`;
+                    cssClass = 'signal-down';
+                    startCountdown();
+                    break;
+                case 'WAIT_ZONE':
+                    message = `⚠️ Wait — ${signal.reason}`;
+                    cssClass = 'signal-wait';
+                    getSignalBtn.disabled = false; // Re-enable button immediately
+                    break;
+                case 'SIDEWAYS':
+                default:
+                    message = `⏸️ Sideways Market — No Entry`;
+                    cssClass = 'signal-sideways';
+                    getSignalBtn.disabled = false; // Re-enable button immediately
+                    break;
+            }
+
+            signalDisplay.innerHTML = message;
+            signalDisplay.className = `signal-display ${cssClass}`; // Apply new class
+        }
+
+        function startCountdown() {
+            let duration = parseInt(timeframeSelect.value) * 60;
+            
+            const updateTimer = () => {
+                const minutes = Math.floor(duration / 60);
+                const seconds = duration % 60;
+                timerDisplay.innerHTML = `Next signal available in: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            };
+            
+            updateTimer(); // Show timer immediately
+            
+            countdownInterval = setInterval(() => {
+                duration--;
+                updateTimer();
+
+                if (duration <= 0) {
+                    clearInterval(countdownInterval);
+                    timerDisplay.innerHTML = 'Ready for next signal.';
+                    getSignalBtn.disabled = false;
+                    checkInputs();
+                }
+            }, 1000);
+        }
+    </script>
+
+</body>
+</html>
