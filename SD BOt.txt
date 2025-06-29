@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SD302 Bot</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 15px; border: 1px solid #ccc; border-radius: 8px; }
+        h1, h2 { text-align: center; }
+        .control-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, button { width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        button { background-color: #007bff; color: white; font-weight: bold; cursor: pointer; }
+        button:disabled { background-color: #cccccc; cursor: not-allowed; }
+        #signalResult { font-size: 1.5em; font-weight: bold; text-align: center; margin-top: 20px; min-height: 50px; padding: 10px; border-radius: 5px; }
+        #countdownTimer { text-align: center; font-size: 1.2em; color: #555; }
+        canvas { display: none; } /* The canvas is for processing, not for display */
+    </style>
+</head>
+<body>
+
+    <h1>SD302 Offical</h1>
+    <h2>Screenshot Signal Detector</h2>
+
+    <div class="control-group">
+        <label for="screenshotUpload">1. Upload Quotex Chart Screenshot (.jpg, .png)</label>
+        <input type="file" id="screenshotUpload" accept="image/png, image/jpeg">
+    </div>
+
+    <div class="control-group">
+        <label for="timeframeSelect">2. Select Timeframe</label>
+        <select id="timeframeSelect">
+            <option value="">-- Please Select --</option>
+            <option value="1">1 Minute</option>
+            <option value="5">5 Minutes</option>
+            <option value="15">15 Minutes</option>
+        </select>
+    </div>
+
+    <button id="getSignalBtn" disabled>Get Signal</button>
+
+    <div id="signalResult"></div>
+    <div id="countdownTimer"></div>
+
+    <canvas id="imageCanvas"></canvas>
+
+    <script>
+        const screenshotUpload = document.getElementById('screenshotUpload');
+        const timeframeSelect = document.getElementById('timeframeSelect');
+        const getSignalBtn = document.getElementById('getSignalBtn');
+        const signalResult = document.getElementById('signalResult');
+        const countdownTimer = document.getElementById('countdownTimer');
+        const canvas = document.getElementById('imageCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        let isImageUploaded = false;
+        let isTimeframeSelected = false;
+        let countdownInterval;
+
+        // --- UI State Management ---
+
+        function updateButtonState() {
+            getSignalBtn.disabled = !(isImageUploaded && isTimeframeSelected);
+        }
+
+        screenshotUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // Resize canvas to image dimensions for analysis
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        isImageUploaded = true;
+                        updateButtonState();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        timeframeSelect.addEventListener('change', () => {
+            isTimeframeSelected = !!timeframeSelect.value;
+            updateButtonState();
+        });
+
+        getSignalBtn.addEventListener('click', analyzeAndSignal);
+
+        // --- AI/Logic Core ---
+
+        function analyzeAndSignal() {
+            getSignalBtn.disabled = true;
+            signalResult.textContent = "Analyzing...";
+            signalResult.style.color = '#333';
+
+            // Use a timeout to simulate processing and let the UI update
+            setTimeout(() => {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const { data, width, height } = imageData;
+
+                // --- Heuristic 1: Detect Supply/Demand Zones ---
+                // We'll define a zone as a horizontal area with a high density of both red and green wicks/bodies.
+                const zoneDetected = detectZones(data, width, height);
+                if (zoneDetected) {
+                    displaySignal("WAIT", "⚠️ Wait — Market Near Supply/Demand Zone");
+                    startCountdown();
+                    return;
+                }
+
+                // --- Heuristic 2: Detect Trend ---
+                // Analyze the rightmost 33% of the image for color dominance.
+                const trend = detectTrend(data, width, height);
+                
+                let signal, message;
+                switch (trend) {
+                    case 'UPTREND':
+                        signal = 'UP';
+                        message = `✅ Signal: UP for ${timeframeSelect.value} Minute(s)`;
+                        break;
+                    case 'DOWNTREND':
+                        signal = 'DOWN';
+                        message = `✅ Signal: DOWN for ${timeframeSelect.value} Minute(s)`;
+                        break;
+                    default:
+                        signal = 'SIDEWAYS';
+                        message = '⏸️ Sideways Market — No Entry';
+                        break;
+                }
+                displaySignal(signal, message);
+                startCountdown();
+
+            }, 500); // Short delay for user experience
+        }
+
+        function isGreen(r, g, b) {
+            // Define what a "green" candle pixel looks like (tweak if needed)
+            return g > r && g > b && g > 100 && r < 100;
+        }
+
+        function isRed(r, g, b) {
+            // Define what a "red" candle pixel looks like (tweak if needed)
+            return r > g && r > b && r > 100 && g < 100;
+        }
+
+        function detectZones(data, width, height) {
+            const zoneThreshold = 0.005; // 0.5% of pixels in a band must be significant
+            const bandHeight = 10; // Analyze in 10-pixel tall horizontal bands
+
+            for (let y = 0; y < height - bandHeight; y += bandHeight) {
+                let redPixels = 0;
+                let greenPixels = 0;
+                // Analyze the middle half of the chart horizontally to avoid UI elements
+                for (let bandY = y; bandY < y + bandHeight; bandY++) {
+                    for (let x = Math.floor(width / 4); x < Math.floor(width * 3 / 4); x++) {
+                        const i = (bandY * width + x) * 4;
+                        if (isGreen(data[i], data[i + 1], data[i + 2])) greenPixels++;
+                        if (isRed(data[i], data[i + 1], data[i + 2])) redPixels++;
+                    }
+                }
+                
+                const totalPixelsInBand = (width / 2) * bandHeight;
+                const redDensity = redPixels / totalPixelsInBand;
+                const greenDensity = greenPixels / totalPixelsInBand;
+
+                // If a band has a significant amount of both red and green, it's a conflict zone.
+                if (redDensity > zoneThreshold && greenDensity > zoneThreshold) {
+                    console.log(`Zone detected at y=${y} with RedDensity: ${redDensity.toFixed(4)}, GreenDensity: ${greenDensity.toFixed(4)}`);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function detectTrend(data, width, height) {
+            let greenPixels = 0;
+            let redPixels = 0;
+            const startX = Math.floor(width * 2 / 3); // Analyze rightmost third
+
+            for (let y = 0; y < height; y++) {
+                for (let x = startX; x < width; x++) {
+                    const i = (y * width + x) * 4;
+                    const r = data[i], g = data[i+1], b = data[i+2];
+                    if (isGreen(r, g, b)) greenPixels++;
+                    if (isRed(r, g, b)) redPixels++;
+                }
+            }
+            
+            console.log(`Trend Analysis - Red Pixels: ${redPixels}, Green Pixels: ${greenPixels}`);
+            
+            const total = redPixels + greenPixels;
+            if (total === 0) return 'SIDEWAYS';
+
+            const dominanceRatio = greenPixels / (redPixels || 1); // Avoid division by zero
+
+            if (dominanceRatio > 1.75) return 'UPTREND';
+            if (dominanceRatio < 0.57) return 'DOWNTREND';
+            
+            return 'SIDEWAYS';
+        }
+
+        // --- Display & Timer ---
+        
+        function displaySignal(type, message) {
+            signalResult.textContent = message;
+            if (type === 'UP' || type === 'DOWN') signalResult.style.color = '#28a745';
+            else if (type === 'WAIT') signalResult.style.color = '#ffc107';
+            else signalResult.style.color = '#6c757d';
+        }
+
+        function startCountdown() {
+            clearInterval(countdownInterval);
+            const minutes = parseInt(timeframeSelect.value, 10);
+            let totalSeconds = minutes * 60;
+
+            countdownInterval = setInterval(() => {
+                if (totalSeconds <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownTimer.textContent = "Timer finished. Ready for next signal.";
+                    updateButtonState(); // Re-enable the button
+                } else {
+                    const mins = Math.floor(totalSeconds / 60);
+                    const secs = totalSeconds % 60;
+                    countdownTimer.textContent = `Next signal available in: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                    totalSeconds--;
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
