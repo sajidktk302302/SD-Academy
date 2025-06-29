@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SD302 Academy</title>
+    <style>
+        /* CSS is completely unchanged */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; line-height: 1.6; transition: background-color 0.3s ease, color 0.3s ease; }
+        body.dark-mode { background-color: #212529; color: #f8f9fa; }
+        body.light-mode { background-color: #f8f9fa; color: #212529; }
+        .header { position: fixed; top: 0; left: 0; width: 100%; background: linear-gradient(to right, #007bff, #6610f2); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); }
+        .hamburger { font-size: 1.5rem; cursor: pointer; transition: transform 0.3s ease; }
+        .hamburger:hover { transform: scale(1.1); }
+        .sidenav { height: 100%; width: 250px; position: fixed; top: 0; left: -250px; background: linear-gradient(to bottom, #6610f2, #007bff); padding-top: 60px; transition: left 0.3s ease-in-out; z-index: 999; }
+        .sidenav.open { left: 0; }
+        .sidenav a { padding: 15px 25px; text-decoration: none; font-size: 1.2rem; color: white; display: block; transition: background-color 0.3s ease; }
+        .sidenav a:hover { background-color: rgba(255, 255, 255, 0.2); }
+        .closebtn { position: absolute; top: 10px; right: 25px; font-size: 2rem; color: white; cursor: pointer; transition: transform 0.3s ease; }
+        .closebtn:hover { transform: scale(1.1); }
+        body.sidebar-open { overflow: hidden; }
+        main { padding-top: 60px; padding-left: 20px; padding-right: 20px; padding-bottom: 20px; min-height: 100vh; }
+        .content { animation: fadeIn 0.5s ease-in-out; }
+        .welcome-section { text-align: center; padding: 40px 20px; }
+        .welcome-section h1 { font-size: 2.5rem; margin-bottom: 20px; color: #20c997; }
+        .welcome-section p { max-width: 800px; margin: 0 auto 20px; font-size: 1rem; text-align: left; }
+        .welcome-section .urdu { font-size: 1rem; direction: rtl; background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 8px; margin-top: 20px; text-align: right; }
+        .demo-images { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-top: 20px; }
+        .demo-images img { width: 100%; max-width: 300px; border-radius: 8px; transition: transform 0.3s ease; }
+        .demo-images img:hover { transform: scale(1.05); }
+        .dashboard { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+        .card { background: #343a40; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); width: 300px; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .light-mode .card { background: #ffffff; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4); }
+        .light-mode .card:hover { box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); }
+        .card img { width: 100%; height: 150px; object-fit: cover; }
+        .card-content { padding: 15px; }
+        .card-title { font-size: 1.2rem; margin-bottom: 10px; }
+        .card-description { font-size: 0.9rem; color: #adb5bd; margin-bottom: 15px; }
+        .light-mode .card-description { color: #6c757d; }
+        .card-button { background: #20c997; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; }
+        .card-button:hover { background: #17a589; }
+        .theme-toggle { position: fixed; bottom: 20px; right: 20px; background: #343a40; color: #f8f9fa; border: 1px solid #f8f9fa; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.3s ease, color 0.3s ease; z-index: 998; }
+        .light-mode .theme-toggle { background: #f8f9fa; color: #212529; border-color: #212529; }
+        .theme-toggle:hover { background: #495057; }
+        .light-mode .theme-toggle:hover { background: #e9ecef; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 768px) {
+            .sidenav { width: 200px; left: -200px; }
+            .sidenav.open { left: 0; }
+            .sidenav a { font-size: 1rem; padding: 10px 20px; }
+            .card { width: 100%; max-width: 300px; }
+            .theme-toggle { bottom: 10px; right: 10px; width: 35px; height: 35px; font-size: 0.9rem; }
+            .welcome-section h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <header class="header">
+        <div class="hamburger" onclick="openNav()">☰</div>
+    </header>
+    <nav class="sidenav">
+        <div class="closebtn" onclick="closeNav()">×</div>
+        <a href="#" id="bot-shop-link">Bot Shop</a>
+        <a href="#" id="script-shop-link">Script Shop</a>
+    </nav>
+    <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+    <main id="main-content">
+        <div class="content welcome-section">
+            <h1>Welcome to SD302 Academy</h1>
+            <p>
+               SD302 Academy is a leading innovator in the realm of financial trading, dedicated to empowering traders with state-of-the-art tools designed to enhance efficiency, profitability, and ease of use. Specializing in automated trading bots and scripts, we cater to traders of all experience levels, from novices to seasoned professionals, across various financial markets including forex, cryptocurrencies, stocks, and commodities. Our mission is to simplify the complexities of trading, enabling our users to make informed decisions with confidence and precision through cutting-edge technology and expertly crafted strategies.
+
+                At SD302 Academy, we understand the challenges traders face in today’s fast-paced markets. Volatility, time constraints, and the need for accurate, real-time data can make trading a daunting task. This is where our trading bots come into play. Our bots are engineered to automate repetitive tasks, analyze market trends in real-time, and execute trades with unparalleled accuracy. By removing the emotional and psychological barriers often associated with manual trading, our bots ensure consistent performance, even in the most volatile market conditions. Whether you’re trading Bitcoin, forex pairs, or equities, our bots are designed to optimize your trading strategy and maximize returns.
+
+                Our trading scripts complement our bots by offering customizable solutions for traders who prefer a more hands-on approach. These scripts integrate seamlessly with popular platforms such as MetaTrader 4 (MT4), MetaTrader 5 (MT5), Quotex, and OlympTrade, among others. Each script is tailored to specific trading strategies, such as trend-following, scalping, or breakout trading, allowing users to align their tools with their unique trading goals. What sets our scripts apart is their simplicity—no advanced coding knowledge is required. With clear instructions and user-friendly interfaces, our scripts enable traders to set up and deploy their strategies quickly and effectively.
+
+                Safety is at the core of everything we do at SD302 Academy. We recognize that trust is paramount in the trading world, and our tools are designed with security as a top priority. Every bot and script undergoes rigorous testing to ensure reliability and performance under diverse market conditions. Our delivery process is equally secure, utilizing advanced encryption to protect your purchase from the moment you contact our admin team to the point of delivery. This ensures that your tools are delivered safely and are ready for immediate use, giving you peace of mind as you integrate them into your trading workflow.
+
+                Performance is another hallmark of SD302 Academy’s offerings. Our tools are powered by proprietary algorithms developed by our team of trading experts, who bring years of experience and deep market knowledge to the table. These algorithms are designed to adapt to changing market dynamics, ensuring that our bots and scripts remain effective over time. To keep our tools at the cutting edge, we provide lifetime updates at no additional cost, so you always have access to the latest features and optimizations. This commitment to continuous improvement ensures that our users stay ahead in the competitive world of trading.
+
+                The tools offered by SD302 Academy are not just off-the-shelf products; they are the result of meticulous craftsmanship and custom strategies tailored to meet the needs of modern traders. Our team has developed proprietary trading methodologies that are embedded within our bots and scripts, giving users a competitive edge. Whether you’re looking to automate your entire trading process or enhance specific aspects of your strategy, our tools are versatile enough to accommodate a wide range of trading styles, from aggressive high-frequency trading to conservative long-term investments.
+
+                The buying process at SD302 Academy is designed to be straightforward and secure. To purchase a bot or script, simply contact our admin team at 03490093530, who will guide you through the process and ensure prompt delivery of your tool. We pride ourselves on our responsive customer support, which is available to address any questions or concerns you may have. Once your purchase is complete, your tool is delivered through a secure, encrypted channel, ensuring that your investment is protected from start to finish. This seamless process allows you to focus on what matters most—your trading.
+
+                Why do traders choose SD302 Academy? The answer lies in our commitment to excellence, innovation, and user satisfaction. Our tools are designed to address the real-world challenges faced by traders, such as market unpredictability and the need for rapid decision-making. By automating key tasks and providing real-time insights, our bots and scripts free up valuable time, allowing you to focus on strategy development and market analysis. This combination of automation, precision, and ease of use makes our tools indispensable for traders seeking to elevate their performance.
+
+                In addition to their technical prowess, our tools are designed with simplicity in mind. We believe that powerful trading tools should be accessible to everyone, regardless of technical expertise. Our intuitive interfaces and comprehensive documentation make it easy for users to get started, even if they have never used automated trading tools before. This accessibility, combined with our focus on safety and performance, has made SD302 Academy a trusted name in the trading community.
+
+                Join the growing community of traders who have transformed their trading experience with SD302 Academy. Our tools are more than just software—they are a gateway to smarter, more efficient trading. Whether you’re looking to automate your trades, enhance your strategies, or simply save time, our bots and scripts are designed to help you achieve your financial goals. Explore our Bot Shop and Script Shop today to discover the tools that will take your trading to the next level.
+
+                In conclusion, SD302 Academy is your trusted partner in navigating the complexities of financial markets. Our automated trading bots and scripts are built with precision, safety, and simplicity in mind, empowering you to trade with confidence. With a focus on performance, secure delivery, and user-friendly design, we are committed to helping you succeed in the world of trading. Start your journey with SD302 Academy today and experience the difference that professional-grade tools can make.
+            </p>
+            <div class="demo-images">
+                <img src="https://via.placeholder.com/300x200.png?text=Bot+Interface+Demo" alt="Bot Interface">
+                <img src="https://via.placeholder.com/300x200.png?text=Script+Dashboard+View" alt="Script Dashboard">
+                <img src="https://via.placeholder.com/300x200.png?text=Live+Trading+Analytics" alt="Trading Bot UI">
+            </div>
+            <div class="urdu">
+                <h2>ایس ڈی 302 اکیڈمی میں خوش آمدید</h2>
+                <p>
+                   ایس ڈی 302 اکیڈمی مالیاتی ٹریڈنگ کے شعبے میں ایک سرکردہ جدت پسند ادارہ ہے جو ٹریڈرز کو جدید ٹولز فراہم کرنے کے لیے وقف ہے جو کارکردگی، منافع، اور استعمال میں آسانی کو بڑھاتے ہیں۔ خودکار ٹریڈینگ بوٹس اور اسکرپٹس میں مہارت رکھتے ہوئے، ہم ہر تجربے کے ٹریڈرز کے لیے خدمات فراہم کرتے ہیں، چاہے وہ نوآموز ہوں یا تجربہ کار پیشہ ور، جو فاریکس، کرپٹو کرنسیز، اسٹاکس، اور اجناس سمیت مختلف مالیاتی مارکیٹس میں کام کرتے ہیں۔ ہمارا مشن ٹریڈنگ کی پیچیدگیوں کو آسان بنانا ہے، تاکہ ہمارے صارفین اعتماد اور درستگی کے ساتھ باخبر فیصلے کر سکیں، جدید ٹیکنالوجی اور ماہرانہ طور پر تیار کردہ حکمت عملیوں کے ذریعے۔
+
+                    ہم ایس ڈی 302 اکیڈمی میں ٹریڈرز کو آج کی تیز رفتار مارکیٹس میں درپیش چیلنجز کو سمجھتے ہیں۔ اتار چڑھاؤ، وقت کی پابندیاں، اور درست، ریئل ٹائم ڈیٹا کی ضرورت ٹریڈنگ کو ایک مشکل کام بنا سکتی ہے۔ یہیں ہمارے ٹریڈنگ بوٹس اپنا کردار ادا کرتے ہیں۔ ہمارے بوٹس کو بار بار دہرائے جانے والے کاموں کو خودکار بنانے، ریئل ٹائم میں مارکیٹ کے رجحانات کا تجزیہ کرنے، اور بے مثال درستگی کے ساتھ ٹریڈز نافذ کرنے کے لیے انجنیئر کیا گیا ہے۔ دستی ٹریڈنگ سے وابستہ جذباتی اور نفسیاتی رکاوٹوں کو ہٹا کر، ہمارے بوٹس انتہائی غیر مستحکم مارکیٹ حالات میں بھی مستقل کارکردگی کو یقینی بناتے ہیں۔ چاہے آپ بٹ کوائن، فاریکس جوڑوں، یا ایکویٹیز کی ٹریڈنگ کر رہے ہوں، ہمارے بوٹس آپ کی ٹریڈنگ حکمت عملی کو بہتر بنانے اور زیادہ سے زیادہ منافع حاصل کرنے کے لیے بنائے گئے ہیں۔
+
+                    ہمارے ٹریڈینگ اسکرپٹس ہمارے بوٹس کو مکمل کرتے ہیں، جو ان ٹریڈرز کے لیے حسب ضرورت حل پیش کرتے ہیں جو زیادہ ہاتھ سے کام کرنا پسند کرتے ہیں۔ یہ اسکرپٹس میٹا ٹریڈر 4 (MT4)، میٹا ٹریڈر 5 (MT5)، کووٹیکس، اور اولمپ ٹریڈ جیسے مشہور پلیٹ فارمز کے ساتھ بغیر کسی رکاوٹ کے مربوط ہوتے ہیں۔ ہر اسکرپٹ مخصوص ٹریڈنگ حکمت عملیوں، جیسے کہ رجحان کی پیروی، اسکیلپنگ، یا بریک آؤٹ ٹریڈنگ کے لیے تیار کیا گیا ہے، جو صارفین کو اپنے منفرد ٹریڈنگ اہداف کے ساتھ اپنے ٹولز کو ہم آہنگ کرنے کی اجازت دیتا ہے۔ ہمارے اسکرپٹس کی خاص بات ان کی سادگی ہے—کسی جدید کوڈنگ علم کی ضرورت نہیں ہے۔ واضح ہدایات اور صارف دوست انٹرفیس کے ساتھ، ہمارے اسکرپٹس ٹریڈرز کو اپنی حکمت عملیوں کو تیزی سے اور مؤثر طریقے سے ترتیب دینے اور تعیناتی کرنے کے قابل بناتے ہیں۔
+
+                    حفاظت ہمارے ہر کام کے مرکز میں ہے۔ ہم سمجھتے ہیں کہ ٹریڈنگ کی دنیا میں اعتماد سب سے اہم ہے، اور ہمارے ٹولز کو سیکیورٹی کو اولین ترجیح دیتے ہوئے ڈیزائن کیا گیا ہے۔ ہر بوٹ اور اسکرپٹ مختلف مارکیٹ حالات میں بھروسے اور کارکردگی کو یقینی بنانے کے لیے سخت جانچ سے گزرتا ہے۔ ہمارا ترسیل کا عمل بھی اتنا ہی محفوظ ہے، جو آپ کی خریداری کو ہماری ایڈمن ٹیم سے رابطہ کرنے کے لمحے سے لے کر ترسیل تک محفوظ رکھنے کے لیے جدید انکرپشن کا استعمال کرتا ہے۔ یہ یقینی بناتا ہے کہ آپ کے ٹولز محفوظ طریقے سے پہنچائے جائیں اور فوری استعمال کے لیے تیار ہوں، آپ کو ذہنی سکون فراہم کرتے ہوئے جب آپ انہیں اپنے ٹریڈنگ ورک فلو میں شامل کرتے ہیں۔
+
+                    کارکردگی ایس ڈی 302 اکیڈمی کی پیشکشوں کی ایک اور نمایاں خصوصیت ہے۔ ہمارے ٹولز ہماری ٹریڈنگ ماہرین کی ٹیم کے تیار کردہ ملکیتی الگورتھم سے چلتے ہیں، جو برسوں کا تجربہ اور گہری مارکیٹ کی معلومات لاتے ہیں۔ یہ الگورتھم مارکیٹ کی بدلتی ہوئی حرکیات کے مطابق ڈھالنے کے لیے بنائے گئے ہیں، اس بات کو یقینی بناتے ہوئے کہ ہمارے بوٹس اور اسکرپٹس وقت کے ساتھ موثر رہیں۔ ہمارے ٹولز کو جدت کے forefront پر رکھنے کے لیے، ہم کوئی اضافی قیمت کے بغیر زندگی بھر اپ ڈیٹس فراہم کرتے ہیں، تاکہ آپ کو ہمیشہ تازہ ترین خصوصیات اور اصلاحات تک رسائی حاصل ہو۔ یہ مسلسل بہتری کا عزم یقینی بناتا ہے کہ ہمارے صارفین ٹریڈنگ کی مسابقتی دنیا میں آگے رہیں۔
+
+                    ایس ڈی 302 اکیڈمی کے پیش کردہ ٹولز محض تیار شدہ مصنوعات نہیں ہیں؛ وہ احتیاط سے تیار کردہ اور حسب ضرورت حکمت عملیوں کا نتیجہ ہیں جو جدید ٹریڈرز کی ضروریات کو پورا کرنے کے لیے بنائی گئی ہیں۔ ہماری ٹیم نے ملکیتی ٹریڈنگ طریقہ کار تیار کیے ہیں جو ہمارے بوٹس اور اسکرپٹس میں شامل ہیں، جو صارفین کو مسابقتی برتری دیتے ہیں۔ چاہے آپ اپنے پورے ٹریڈنگ عمل کو خودکار بنانا چاہتے ہوں یا اپنی حکمت عملی کے مخصوص پہلوؤں کو بہتر بنانا چاہتے ہوں، ہمارے ٹولز مختلف ٹریڈنگ اسٹائلز کو ایڈجسٹ کرنے کے لیے کافی ورسٹائل ہیں، جارحانہ ہائی فریکوئنسی ٹریڈنگ سے لے کر قدامت پسند طویل مدتی سرمایہ کاری تک۔
+
+                    ایس ڈی 302 اکیڈمی میں خریداری کا عمل سیدھا اور محفوظ ہے۔ بوٹ یا اسکرپٹ خریدنے کے لیے، بس ہماری ایڈمن ٹیم سے 03490093530 پر رابطہ کریں، جو آپ کو عمل کے ذریعے رہنمائی کرے گی اور آپ کے ٹول کی فوری ترسیل کو یقینی بنائے گی۔ ہم اپنی ذمہ دار کسٹمر سپورٹ پر فخر کرتے ہیں، جو آپ کے کسی بھی سوالات یا خدشات کو فوری طور پر حل کرنے کے لیے دستیاب ہے۔ آپ کی خریداری مکمل ہونے کے بعد، آپ کا ٹول ایک محفوظ، انکرپٹڈ چینل کے ذریعے پہنچایا جاتا ہے، اس بات کی ضمانت دیتے ہوئے کہ آپ کا سرمایہ شروع سے آخر تک محفوظ ہے۔ یہ بغیر کسی رکاوٹ کا عمل آپ کو اس چیز پر توجہ دینے کی اجازت دیتا ہے جو سب سے زیادہ اہم ہے—آپ کی ٹریڈنگ۔
+
+                    ٹریڈرز ایس ڈی 302 اکیڈمی کو کیوں منتخب کرتے ہیں؟ اس کا جواب ہماری فضیلت، جدت، اور صارف کی اطمینان کے لیے عزم میں مضمر ہے۔ ہمارے ٹولز ٹریڈرز کے اصل عالمی چیلنجز، جیسے کہ مارکیٹ کی غیر یقینی صورتحال اور تیز فیصلہ سازی کی ضرورت کو حل کرنے کے لیے بنائے گئے ہیں۔ کلیدی کاموں کو خودکار بنانے اور ریئل ٹائم بصیرت فراہم کرکے، ہمارے بوٹس اور اسکرپٹس قیمتی وقت آزاد کرتے ہیں، جس سے آپ حکمت عملی کی ترقی اور مارکیٹ کے تجزیے پر توجہ دے سکتے ہیں۔ آٹومیشن، درستگی، اور استعمال میں آسانی کا یہ امتزاج ہمارے ٹولز کو ان ٹریڈرز کے لیے ناگزیر بناتا ہے جو اپنی کارکردگی کو بلند کرنا چاہتے ہیں۔
+
+                    اپنی تکنیکی مہارت کے علاوہ، ہمارے ٹولز سادگی کو مدنظر رکھتے ہوئے بنائے گئے ہیں۔ ہمارا ماننا ہے کہ طاقتور ٹریڈینگ ٹولز ہر ایک کے لیے قابل رسائی ہونے چاہئیں، قطع نظر اس کے کہ ان کی تکنیکی مہارت کیا ہے۔ ہمارے بدیہی انٹرفیس اور جامع دستاویزات صارفین کے لیے شروعات کرنا آسان بناتے ہیں، یہاں تک کہ اگر انہوں نے پہلے کبھی خودکار ٹریڈنگ ٹولز استعمال نہیں کیے ہوں۔ یہ رسائی، ہماری حفاظت اور کارکردگی پر توجہ کے ساتھ مل کر، ایس ڈی 302 اکیڈمی کو ٹریڈنگ کمیونٹی میں ایک قابل اعتماد نام بناتی ہے۔
+
+                    ان ہزاروں ٹریڈرز کے ساتھ شامل ہوں جنہوں نے ایس ڈی 302 اکیڈمی کے ساتھ اپنے ٹریڈنگ کے تجربے کو بدل دیا ہے۔ ہمارے ٹولز محض سافٹ ویئر نہیں ہیں—وہ ہوشیار، زیادہ موثر ٹریڈنگ کے لیے ایک گیٹ وے ہیں۔ چاہے آپ اپنی ٹریڈز کو خودکار بنانا چاہتے ہوں، اپنی حکمت عملیوں کو بہتر بنانا چاہتے ہوں، یا صرف وقت بچانا چاہتے ہوں، ہمارے بوٹس اور اسکرپٹس آپ کے مالی اہداف کو حاصل کرنے میں مدد کرنے کے لیے بنائے گئے ہیں۔ آج ہی ہمارے بوٹ شاپ اور اسکرپٹ شاپ کو دریافت کریں تاکہ ان ٹولز کو دریافت کریں جو آپ کی ٹریڈنگ کو اگلی سطح پر لے جائیں گے۔
+
+                    آخر میں، ایس ڈی 302 اکیڈمی مالیاتی مارکیٹس کی پیچیدگیوں کو نیویگیٹ کرنے میں آپ کا قابل اعتماد پارٹنر ہے۔ ہمارے خودکار ٹریڈنگ بوٹس اور اسکرپٹس درستگی، حفاظت، اور سادگی کو مدنظر رکھتے ہوئے بنائے گئے ہیں، جو آپ کو اعتماد کے ساتھ ٹریڈ کرنے کی طاقت دیتے ہیں۔ کارکردگی، محفوظ ترسیل، اور صارف دوست ڈیزائن پر توجہ کے ساتھ، ہم آپ کو ٹریڈینگ کی دنیا میں کامیابی حاصل کرنے میں مدد کرنے کے لیے پرعزم ہیں۔ آج ہی ایس ڈی 302 اکیڈمی کے ساتھ اپنا سفر شروع کریں اور پیشہ ورانہ درجے کے ٹولز سے ہونے والے فرق کا تجربہ کریں۔
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const synth = window.speechSynthesis;
+        let urduVoice = null;
+        let isSpeechUnlocked = false;
+
+        function initializeSpeech() {
+            if (isSpeechUnlocked) return;
+            const voices = synth.getVoices();
+            if (voices.length === 0) {
+                synth.onvoiceschanged = () => {
+                    const updatedVoices = synth.getVoices();
+                    urduVoice = updatedVoices.find(v => v.lang.startsWith('ur')) || updatedVoices.find(v => v.lang.startsWith('en-GB')) || updatedVoices[0];
+                };
+            } else {
+                urduVoice = voices.find(v => v.lang.startsWith('ur')) || voices.find(v => v.lang.startsWith('en-GB')) || voices[0];
+            }
+            isSpeechUnlocked = true;
+            console.log("Speech Unlocked. Voice is ready.");
+            speak('خوش آمدید! وائس سسٹم اب ایکٹو ہے۔');
+        }
+
+        function speak(text) {
+            if (!isSpeechUnlocked || !text || !urduVoice) {
+                console.warn("Speech not ready, or no text provided. Please click once on the page.");
+                return;
+            }
+            if (synth.speaking) {
+                synth.cancel();
+            }
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.voice = urduVoice;
+            utterance.lang = urduVoice.lang;
+            utterance.pitch = 1;
+            utterance.rate = 1;
+            synth.speak(utterance);
+        }
+        
+        document.addEventListener('click', function(event) {
+            if (!isSpeechUnlocked) {
+                initializeSpeech();
+            }
+            const target = event.target;
+            if (target.id === 'bot-shop-link') {
+                showDashboard('bots');
+            } else if (target.id === 'script-shop-link') {
+                showDashboard('scripts');
+            }
+            const buyButton = target.closest('.card-button');
+            if (buyButton) {
+                const itemType = buyButton.dataset.itemType;
+                let alertMessage = '';
+                let voiceMessage = '';
+                if (itemType === 'bot') {
+                    alertMessage = "To buy this Bot, please contact the admin at 03490093530.";
+                    voiceMessage = "اس بوٹ کو خریدنے کے لیے، براہ مہربانی ایڈمن سے رابطہ کریں۔ تفصیلات آپ کی سکرین پر موجود ہیں۔";
+                } else if (itemType === 'script') {
+                    alertMessage = "To buy this Script, please contact the admin at 03490093530.";
+                    voiceMessage = "اس اسکرپٹ کو خریدنے کے لیے، براہ مہربانی ایڈمن سے رابطہ کریں۔ تفصیلات آپ کی سکرین پر موجود ہیں۔";
+                }
+                alert(alertMessage);
+                speak(voiceMessage);
+            }
+        });
+
+        window.onload = () => {
+            console.log("Page loaded. Please click anywhere to activate voice guidance.");
+            let choice = prompt("Where are you buying from? Type 'bot' or 'script'");
+            if (choice !== null) {
+                choice = choice.toLowerCase().trim();
+                if (choice === "bot") {
+                    alert("If you are buying from the bot section, please contact admin at 03490093530 to get your personal bot.");
+                } else if (choice === "script") {
+                    alert("If you are buying from the script options, please contact admin at 03490093530 to get your personal script.");
+                } else {
+                    alert("Invalid option. Please type 'bot' or 'script'.");
+                }
+            }
+        };
+
+        function openNav() { document.querySelector('.sidenav').classList.add('open'); document.body.classList.add('sidebar-open'); }
+        function closeNav() { document.querySelector('.sidenav').classList.remove('open'); document.body.classList.remove('sidebar-open'); }
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            document.body.classList.toggle('light-mode');
+            document.querySelector('.theme-toggle').textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+        }
+
+        function showDashboard(type) {
+            const content = document.getElementById('main-content');
+            content.innerHTML = `<div class="content dashboard" id="dashboard"></div>`;
+            const dashboard = document.getElementById('dashboard');
+            let voiceMessage = '';
+
+            if (type === 'bots') {
+                dashboard.innerHTML = `<div class="card"><img src="https://via.placeholder.com/300x150.png?text=Crypto+Bot" alt="Crypto Bot"><div class="card-content"><h3 class="card-title">Crypto Bot</h3><p class="card-description">Automated trading for cryptocurrencies.</p><button class="card-button" data-item-type="bot">Buy Now</button></div></div>
+                                       <div class="card"><img src="https://via.placeholder.com/300x150.png?text=Forex+Bot" alt="Forex Bot"><div class="card-content"><h3 class="card-title">Forex Bot</h3><p class="card-description">High-frequency trading for forex markets.</p><button class="card-button" data-item-type="bot">Buy Now</button></div></div>`;
+                voiceMessage = 'آپ بوٹ شاپ میں ہیں۔ یہاں دستیاب بوٹس کی تفصیلات دیکھیں۔ کسی بھی بوٹ کو خریدنے کے لیے، اس کے بائے ناؤ بٹن پر کلک کریں۔';
+            } else if (type === 'scripts') {
+                dashboard.innerHTML = `<div class="card"><img src="https://via.placeholder.com/300x150.png?text=Trend+Script" alt="Trend Script"><div class="card-content"><h3 class="card-title">Trend Script</h3><p class="card-description">Identify market trends with precision.</p><button class="card-button" data-item-type="script">Buy Now</button></div></div>
+                                       <div class="card"><img src="https://via.placeholder.com/300x150.png?text=Scalping+Script" alt="Scalping Script"><div class="card-content"><h3 class="card-title">Scalping Script</h3><p class="card-description">Fast-paced scalping strategy for quick trades.</p><button class="card-button" data-item-type="script">Buy Now</button></div></div>`;
+                voiceMessage = 'آپ اسکرپٹ شاپ میں ہیں۔ یہاں دستیاب اسکرپٹس کی تفصیلات دیکھیں۔ کسی بھی اسکرپٹ کو خریدنے کے لیے، اس کے بائے ناؤ بٹن پر کلک کریں۔';
+            }
+            speak(voiceMessage);
+            closeNav();
+        }
+    </script>
+</body>
+</html>
