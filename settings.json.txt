@@ -1,4 +1,0 @@
-{
-  "wallet_address": "YOUR_WALLET_ADDRESS_HERE",
-  "qr_code_url": "https://i.ibb.co/L9jM1pY/sample-qr.png"
-}
